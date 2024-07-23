@@ -30,38 +30,90 @@ class Course:
     # creates a new instance for each row in the db
     @classmethod
     def get_all(cls):
-        pass
+        sql = '''SELECT * FROM courses'''
+
+        rows = CURSOR.execute(sql).fetchall()
+
+        courses_list = []
+        for row_tuple in rows:
+            course = Course(id=row_tuple[0], name=row_tuple[1])
+            courses_list.append(course)
+
+        return courses_list
 
 
     # finds by id and if found instantiates a new instance
     @classmethod
     def get_by_id(cls, id:int):
-        pass
+        sql = '''SELECT * FROM courses WHERE id = ?'''
+
+        row_tuple = CURSOR.execute(sql, [id]).fetchone()
+
+        return Course(id=row_tuple[0], name=row_tuple[1])
 
 
     # --- SQL INSTANCE METHODS --- #
 
     # creates in the db and updates instance with the new id
     def create(self):
-        pass
+        sql = '''INSERT INTO courses (name)
+        VALUES (?)'''
+
+        CURSOR.execute(sql, [self.name]) # add
+        CONN.commit()
+
+        # GET THE LAST DB ITEM AND GRAB ITS ID
+        last_row_sql='''SELECT * FROM courses 
+        ORDER BY id DESC LIMIT 1'''
+
+        self.id = CURSOR.execute(last_row_sql).fetchone()[0]
+
+        return self
 
     # updates the row based on current attributes 
     def update(self):
-        pass
+        sql = '''UPDATE courses
+        SET name = ?
+        WHERE id = ?'''
+
+        CURSOR.execute(sql, [self.name, self.id])
+        CONN.commit()
+
+        return self
 
     # creates or updates depending on whether item exists in db
     def save(self):
-        pass
+        if self.id: # if I am in the db do this
+            self.update()
+        else: # if I am not in the db do this
+            self.create()
+        
     
     # deletes the instance from the db and removes the id
     def destroy(self):
-        pass
+        sql = '''DELETE FROM courses WHERE id = ?'''
+
+        CURSOR.execute(sql, [self.id])
+        CONN.commit()
+
+        self.id = None
+
 
     # --- JOIN METHODS --- #
 
     # return a list of instances of each student
     def students(self):
-        pass
+        sql = '''SELECT * FROM students WHERE course_id = ?'''
+
+        bunch_of_student_tuples = CURSOR.execute(sql, [self.id]).fetchall()
+
+        students_list = []
+        for row in bunch_of_student_tuples:
+            student = Student(id=row[0], name=row[1], grade=row[2], course_id=row[3])
+            students_list.append(student)
+
+        return students_list
+
 
 ############## END COURSE ##############
 
